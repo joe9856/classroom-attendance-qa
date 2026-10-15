@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/project-react/static/css/main.e92681aa.css",
-    "main.js": "/project-react/static/js/main.9f422e3e.js",
-    "static/js/453.fb67ec70.chunk.js": "/project-react/static/js/453.fb67ec70.chunk.js",
-    "index.html": "/project-react/index.html",
-    "main.e92681aa.css.map": "/project-react/static/css/main.e92681aa.css.map",
-    "main.9f422e3e.js.map": "/project-react/static/js/main.9f422e3e.js.map",
-    "453.fb67ec70.chunk.js.map": "/project-react/static/js/453.fb67ec70.chunk.js.map"
+    "main.css": "/classroom-attendance-qa/static/css/main.e92681aa.css",
+    "main.js": "/classroom-attendance-qa/static/js/main.70c1835b.js",
+    "static/js/453.fb67ec70.chunk.js": "/classroom-attendance-qa/static/js/453.fb67ec70.chunk.js",
+    "index.html": "/classroom-attendance-qa/index.html",
+    "main.e92681aa.css.map": "/classroom-attendance-qa/static/css/main.e92681aa.css.map",
+    "main.70c1835b.js.map": "/classroom-attendance-qa/static/js/main.70c1835b.js.map",
+    "453.fb67ec70.chunk.js.map": "/classroom-attendance-qa/static/js/453.fb67ec70.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e92681aa.css",
-    "static/js/main.9f422e3e.js"
+    "static/js/main.70c1835b.js"
   ]
 }
