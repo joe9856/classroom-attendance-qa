@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { auth } from "./firebase"; // นำเข้า Firebase config
 import { onAuthStateChanged, signOut } from "firebase/auth"; // ใช้เพื่อตรวจสอบสถานะผู้ใช้
-import { useNavigate } from "react-router-dom"; // นำเข้า useNavigate
+import { Link, useNavigate } from "react-router-dom"; // นำเข้า useNavigate
 
 import { AppBar, Toolbar, Typography, Button, Avatar, Box } from "@mui/material"; // ใช้ MUI สำหรับ Navbar
 
@@ -96,7 +96,7 @@ function Navbar() {
             </Button>
           </Box>
         ) : (
-          <Button color="inherit" href="/login" sx={{ fontWeight: "bold" }}>
+          <Button color="inherit" component={Link} to="/login" sx={{ fontWeight: "bold" }}>
             เข้าสู่ระบบ
           </Button>
         )}

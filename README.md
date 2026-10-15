@@ -1,70 +1,72 @@
-# Getting Started with Create React App
+# Classroom Attendance (web)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+React / Create React App website for classroom management, attendance, and questions. Authentication and classroom data use Firebase project `finalprojectsc362202`.
 
-## Available Scripts
+Website: https://joe9856.github.io/classroom-attendance-qa/
 
-In the project directory, you can run:
+## Run locally
 
-### `npm start`
+```sh
+npm ci
+npm start
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Open the local URL printed by the development server. Firebase must allow the local hostname; `localhost` was already authorized when checked on 2026-10-16 (Asia/Bangkok).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## GitHub Pages outage diagnosed on 2026-10-16
 
-### `npm test`
+The public repository previously named `project-react` now resolves to `joe9856/classroom-attendance-qa`. The old Pages URL returns HTTP 404.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The current Pages URL returns HTTP 200, but its deployed HTML still loads JavaScript and CSS from `/project-react/`. The JavaScript URL in that HTML returns HTTP 404, while the same file exists under `/classroom-attendance-qa/`. This prevents React from starting and leaves a blank page.
 
-### `npm run build`
+The `homepage` in `package.json` now matches the current Pages URL. The repaired build was published to `gh-pages` on 2026-10-16. The live HTML and all five referenced assets returned HTTP 200, and the login page rendered in the browser. The navbar login link was also changed to use React Router so navigation retains the repository path and hash routing.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Local verification after the repair: `npm ci` succeeded and `npm run build` completed with existing lint warnings. All five asset references in the generated HTML and all seven file entries in `asset-manifest.json` use `/classroom-attendance-qa/` and resolve to existing build files. Signed-in flows have not been tested because the Firebase domain setting remains unresolved.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Restore Google sign-in
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The public Firebase Auth configuration responds successfully, but its authorized domains did **not** include `joe9856.github.io` when checked. Google popup sign-in from this website requires that domain.
 
-### `npm run eject`
+The Firebase Console was opened to apply the repair, but the signed-in account received "The project does not exist or you do not have permission to list apps in the project." A project owner must sign in before this setting can be changed. No Firebase permissions or rules have been changed.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+An owner of the Firebase project should:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Open https://console.firebase.google.com/project/finalprojectsc362202/authentication/settings
+2. In Authentication > Settings > Authorized domains, add `joe9856.github.io` (hostname only, without `https://` or the repository path).
+3. Confirm that Google is enabled under Authentication > Sign-in method.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Reference: https://firebase.google.com/docs/auth/web/google-signin
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+The missing domain is a separate issue from the blank page. The Firebase configuration response does not establish that Firestore rules, quotas, or signed-in classroom access are working. Those require a signed-in functional check after publishing. No Firestore rules are stored in this repository.
 
-## Learn More
+## Publish the repaired web build
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```sh
+npm run build
+npm run deploy
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+`deploy` already runs `build` through the `predeploy` script, so `npm run deploy` alone also builds before publishing. Publishing requires GitHub write access.
 
-### Code Splitting
+In GitHub Settings > Pages, confirm the publishing source is the `gh-pages` branch and its root folder when using this deployment script. After publication:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+1. Open https://joe9856.github.io/classroom-attendance-qa/#/login and refresh.
+2. Confirm the JavaScript and CSS requests use `/classroom-attendance-qa/` and return HTTP 200.
+3. Sign in with an existing account, open a classroom, and verify the intended attendance workflow.
 
-### Analyzing the Bundle Size
+The app uses `HashRouter`; shared page URLs include `#/`, for example `#/login`. Keep hash routing for GitHub Pages unless a separate fallback strategy is configured.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Reference: https://create-react-app.dev/docs/deployment/#github-pages
 
-### Making a Progressive Web App
+## Expo / mobile
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+This checkout contains the web app. Although a tracked `.expo` directory exists, there is no Expo dependency, `app.json` / `app.config.*`, `eas.json`, or React Native mobile source. The mobile application's repository or folder is needed to check Expo SDK compatibility, Expo Go support, and its Firebase integration. Updating this web build does not update an installed mobile app.
 
-### Advanced Configuration
+The provided EAS project is https://expo.dev/accounts/natchapon98/projects/my-app. After the owner signed in on 2026-10-16, its overview showed no development or production builds, but it did show published updates. The inspected Android update `854cb450-f2f8-4f3b-81ba-ae94612b2c2b` ("Fix filename casing issues") was published on 2025-03-15 at 14:40 Asia/Bangkok. Its manifest endpoint still responds HTTP 200 and identifies Expo SDK `52.0.0` and runtime `1.0.0`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+SDK 52 is no longer supported by the latest Expo Go. If the phone uses current Expo Go, this is a compatibility issue to resolve separately from GitHub Pages. In addition, the inspected update specifies the custom runtime `1.0.0`; Expo documents that updates with `runtimeVersion` cannot be loaded in Expo Go and require a compatible development build. Installing an older Expo Go alone therefore does not establish that this particular update can run. The owner confirmed Android, but the exact installed client, phone error, and mobile source are still needed to verify and repair that application's behavior.
 
-### Deployment
+References:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/
+- https://docs.expo.dev/build/updates/#previewing-updates-in-development-builds
