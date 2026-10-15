@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/classroom-attendance-qa/static/css/main.e92681aa.css",
-    "main.js": "/classroom-attendance-qa/static/js/main.70c1835b.js",
+    "main.js": "/classroom-attendance-qa/static/js/main.d14249f7.js",
     "static/js/453.fb67ec70.chunk.js": "/classroom-attendance-qa/static/js/453.fb67ec70.chunk.js",
     "index.html": "/classroom-attendance-qa/index.html",
     "main.e92681aa.css.map": "/classroom-attendance-qa/static/css/main.e92681aa.css.map",
-    "main.70c1835b.js.map": "/classroom-attendance-qa/static/js/main.70c1835b.js.map",
+    "main.d14249f7.js.map": "/classroom-attendance-qa/static/js/main.d14249f7.js.map",
     "453.fb67ec70.chunk.js.map": "/classroom-attendance-qa/static/js/453.fb67ec70.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e92681aa.css",
-    "static/js/main.70c1835b.js"
+    "static/js/main.d14249f7.js"
   ]
 }
