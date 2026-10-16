@@ -27,7 +27,11 @@ Local verification after the repair: `npm ci` succeeded and `npm run build` comp
 
 The public Firebase Auth configuration originally did **not** include `joe9856.github.io`. The owner added that exact hostname, and a later configuration request confirmed it is now authorized.
 
-The owner signed into the correct Google account. Firebase Console in the in-app browser failed to load its terms-of-service acceptance status, so the owner completed the domain update in their normal browser. No Firestore permissions or rules were changed. Testing the web Google popup in the in-app browser encountered `auth/network-request-failed`; completing real sign-in and checking signed-in workflows in the user's normal browser remain necessary.
+The owner signed into the correct Google account. Firebase Console in the in-app browser failed to load its terms-of-service acceptance status, so the owner completed the domain update in their normal browser. No Firestore permissions or rules were changed. Testing the web Google popup in the in-app browser encountered `auth/network-request-failed`. The owner subsequently reported successful authentication in Chrome, followed by remaining on the Login page.
+
+The Login code previously waited for Firestore profile reads/writes before navigating, and its restored-session handler redirected only from `/`, not `/login`. Login now navigates directly after authentication (including restored sessions); profile initialization runs separately on Home and preserves existing profiles. Home subscribes to classrooms only after authentication is ready. Profile and classroom failures are visible, and slow classroom connections show a retry action after 15 seconds without hiding the signed-in page. These changes still require a real signed-in classroom check in the owner's browser; mocked regression tests do not establish backend permissions or quota availability.
+
+All nine regression tests passed with `npm test -- --watchAll=false --runInBand --no-cache`, covering restored sessions, Google/email navigation, visible authentication errors, pending/denied profile access, authenticated classroom subscriptions, retry/cleanup, and preservation of existing profile data.
 
 For future hosting changes, an owner of the Firebase project can:
 

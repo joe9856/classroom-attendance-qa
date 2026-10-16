@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { db, auth } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
-import { Card, CardContent, CardMedia, Grid, Typography, Box, CircularProgress, Button } from "@mui/material";
+import { Alert, Card, CardContent, CardMedia, Grid, Typography, Box, CircularProgress, Button } from "@mui/material";
+import { ensureUserProfile } from "./userProfile";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { Edit, Delete } from "@mui/icons-material";
@@ -12,20 +13,38 @@ function Home() {
   const [user, setUser] = useState(null);
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dataError, setDataError] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [slowConnection, setSlowConnection] = useState(false);
+  const [retry, setRetry] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // ตรวจสอบสถานะการล็อกอิน
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        setUser(null);
-        navigate("/login");
-      }
+    return onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (!currentUser) navigate("/login", { replace: true });
     });
+  }, [navigate]);
 
-    // ดึงข้อมูลห้องเรียนแบบ realtime
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    setProfileError("");
+    // Profile storage must never delay entering the classroom page.
+    ensureUserProfile(user).catch((error) => {
+      if (active) setProfileError(`เข้าสู่ระบบแล้ว แต่เข้าถึงโปรไฟล์ไม่ได้ (${error.code || "unknown-error"})`);
+    });
+    return () => { active = false; };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setClassrooms([]);
+    setLoading(true);
+    setDataError("");
+    setSlowConnection(false);
+    const timer = setTimeout(() => setSlowConnection(true), 15000);
+    // Subscribe only after Firebase has restored the authenticated session.
     const unsubscribeClassrooms = onSnapshot(collection(db, "classroom"), (querySnapshot) => {
       const classroomsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
@@ -33,17 +52,23 @@ function Home() {
       }));
       setClassrooms(classroomsData);
       setLoading(false);
+      setSlowConnection(false);
+      clearTimeout(timer);
     }, (error) => {
-      console.error("Error getting documents:", error);
+      clearTimeout(timer);
+      setSlowConnection(false);
+      setDataError(error.code === "permission-denied"
+        ? "เข้าสู่ระบบแล้ว แต่บัญชีนี้ไม่มีสิทธิ์อ่านห้องเรียน กรุณาตรวจสอบสิทธิ์ Firestore ใน Firebase"
+        : `โหลดห้องเรียนไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง (${error.code || "unknown-error"})`);
       setLoading(false);
     });
 
     // คืนค่า unsubscribe เมื่อ component unmount
     return () => {
-      unsubscribeAuth();
+      clearTimeout(timer);
       unsubscribeClassrooms();
     };
-  }, [navigate]);
+  }, [user, retry]);
 
   const handleLogout = async () => {
     try {
@@ -108,7 +133,7 @@ function Home() {
     }
   };
 
-  if (loading) {
+  if (!user) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", marginTop: 5 }}>
         <CircularProgress />
@@ -131,9 +156,17 @@ function Home() {
         }}
       >
         <Typography variant="h4" gutterBottom align="center" color="primary" sx={{ fontSize: "30px" }}>
-          ยินดีต้อนรับ, {user ? user.displayName : "ผู้ใช้"}
+          ยินดีต้อนรับ, {user.displayName || user.email || "ผู้ใช้"}
         </Typography>
       </Box>
+
+      {profileError && <Alert severity="warning" sx={{ marginTop: 2 }}>{profileError}</Alert>}
+      {(dataError || slowConnection) && (
+        <Alert severity={dataError ? "error" : "warning"} sx={{ marginTop: 2 }}
+          action={<Button color="inherit" onClick={() => setRetry((value) => value + 1)}>ลองอีกครั้ง</Button>}>
+          {dataError || "เข้าสู่ระบบแล้ว แต่การเชื่อมต่อข้อมูลห้องเรียนใช้เวลานาน กรุณาตรวจสอบอินเทอร์เน็ตหรือลองอีกครั้ง"}
+        </Alert>
+      )}
 
   
       <Box sx={{ border: "2px solid rgb(226, 226, 226)", borderRadius: "8px", padding: "8px", maxWidth: "300px", margin: "20px 0", boxShadow: 2 }}>
@@ -161,7 +194,12 @@ function Home() {
         </Button>
       </Box>
   
-      {classrooms.length > 0 ? (
+      {loading ? (
+        <Box sx={{ textAlign: "center", marginTop: 4 }} role="status">
+          <CircularProgress />
+          <Typography>กำลังโหลดห้องเรียน...</Typography>
+        </Box>
+      ) : dataError ? null : classrooms.length > 0 ? (
         <Grid container spacing={3} justifyContent="center">
           {classrooms.map((classroom) => (
             <Grid item xs={12} sm={6} md={3} key={classroom.id}>
