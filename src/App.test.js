@@ -4,11 +4,12 @@ import { doc, collection, getDoc, setDoc, onSnapshot } from 'firebase/firestore'
 import Login from './Login';
 import Home from './Home';
 import { ensureUserProfile } from './userProfile';
+import { auth } from './firebase';
 
 const mockNavigate = jest.fn();
 // CRA's Jest 27 resolver cannot read React Router 7's package exports.
 jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate }), { virtual: true });
-jest.mock('./firebase', () => ({ auth: {}, db: {} }));
+jest.mock('./firebase', () => ({ auth: { currentUser: null }, db: {} }));
 // Icons do not affect authentication; avoid loading the entire icon catalog.
 jest.mock('@mui/icons-material', () => ({ Edit: () => null, Delete: () => null }));
 jest.mock('firebase/auth', () => ({
@@ -32,6 +33,7 @@ let stopClassrooms;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  auth.currentUser = null;
   stopAuth = jest.fn();
   stopClassrooms = jest.fn();
   doc.mockReturnValue('profile-ref');
@@ -76,6 +78,36 @@ test('sign-in errors are visible and allow another attempt', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('อนุญาตป๊อปอัป');
   expect(screen.getByRole('button', { name: /Sign in with Google/ })).toBeEnabled();
   expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test('session inspection distinguishes Google browser login from app authentication', () => {
+  render(<Login />);
+  fireEvent.click(screen.getByRole('button', { name: 'ตรวจสอบสถานะล็อกอิน' }));
+  expect(screen.getByRole('status')).toHaveTextContent('เว็บนี้ยังไม่ได้รับการยืนยัน');
+  expect(mockNavigate).not.toHaveBeenCalled();
+  expect(screen.queryByRole('link', { name: 'เปิดหน้าห้องเรียน' })).not.toBeInTheDocument();
+});
+
+test('session inspection recovers an authenticated session and offers a real hash link', () => {
+  render(<Login />);
+  auth.currentUser = user;
+  fireEvent.click(screen.getByRole('button', { name: 'ตรวจสอบสถานะล็อกอิน' }));
+  expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true });
+  expect(screen.getByRole('link', { name: 'เปิดหน้าห้องเรียน' })).toHaveAttribute('href', '#/home');
+});
+
+test('a pending Google sign-in is explained and never treated as a successful login', () => {
+  jest.useFakeTimers();
+  signInWithPopup.mockImplementation(() => new Promise(() => {}));
+  const view = render(<Login />);
+  fireEvent.click(screen.getByRole('button', { name: /Sign in with Google/ }));
+  act(() => jest.advanceTimersByTime(30000));
+  expect(screen.getByRole('status')).toHaveTextContent('ยังรอผลจากการเข้าสู่ระบบ');
+  fireEvent.click(screen.getByRole('button', { name: 'ตรวจสอบสถานะล็อกอิน' }));
+  expect(screen.getByText(/เว็บยังไม่ได้รับผลการเข้าสู่ระบบ/)).toBeInTheDocument();
+  expect(mockNavigate).not.toHaveBeenCalled();
+  view.unmount();
+  jest.useRealTimers();
 });
 
 test('Home waits for auth, shows the page despite a pending profile, and renders classrooms', () => {

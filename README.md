@@ -33,6 +33,10 @@ The Login code previously waited for Firestore profile reads/writes before navig
 
 All nine regression tests passed with `npm test -- --watchAll=false --runInBand --no-cache`, covering restored sessions, Google/email navigation, visible authentication errors, pending/denied profile access, authenticated classroom subscriptions, retry/cleanup, and preservation of existing profile data.
 
+The owner subsequently reported remaining on Login after that deployment. Additional tests using the real HashRouter confirmed that a successful Firebase session changes the hash to `#/home` and renders Home (rather than just calling a mocked navigation function). The in-app browser still returns `auth/network-request-failed` during Google popup sign-in, while public Firebase helper/configuration requests return HTTP 200. The root cause in the owner's Chrome has not yet been established.
+
+Login revision 2 adds a session-check action: it opens Home if Firebase has a current user, otherwise explicitly explains that the website has not received authentication yet. A Home link is offered only for an authenticated session. Pending sign-ins show guidance after 30 seconds without cancelling the popup or launching competing requests. Error codes are displayed without exposing account identifiers or tokens. All 14 regression tests passed, including two tests with the real router. A real signed-in Chrome check remains required.
+
 For future hosting changes, an owner of the Firebase project can:
 
 1. Open https://console.firebase.google.com/project/finalprojectsc362202/authentication/settings
